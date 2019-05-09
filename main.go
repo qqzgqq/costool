@@ -1,10 +1,8 @@
 package main
 
 import (
-	"cos_tool/cosdownload"
-	"cos_tool/cosupload"
-	"cos_tool/restore"
-	"cos_tool/upset"
+	"cos_tool/operation"
+	"cos_tool/template"
 	"flag"
 	"fmt"
 	"os"
@@ -115,10 +113,12 @@ func CHEckouT(s *string) string {
 
 func main() {
 	flag.Parse()
+	// pd use judge
+	var pd string
 	// use costool -enc strings for encrypt strings
 	ENCryptstringS := CHEckouT(ENCryptstring)
 	if ENCryptstringS != "" {
-		fmt.Println("++++++++++++++encrypt string+++++++++:", upset.StringUPSET(ENCryptstringS))
+		fmt.Println("++++++++++++++encrypt string+++++++++:", template.StringUPSET(ENCryptstringS))
 		os.Exit(0)
 	}
 
@@ -127,9 +127,9 @@ func main() {
 
 	// receive the strings
 	BucketURLS := CHEckouT(BucketURL)
-	SecretIDS := CHEckouT(SecretID)
+	var SecretIDS string = CHEckouT(SecretID)
 	SSecretIDS := CHEckouT(SSecretID)
-	SecretKEYS := CHEckouT(SecretKEY)
+	var SecretKEYS string = CHEckouT(SecretKEY)
 	SSecretKEYS := CHEckouT(SSecretKEY)
 	BFILENameS := CHEckouT(BFILEName)
 	SYSFILEDirS := CHEckouT(SYSFILEDir)
@@ -151,135 +151,55 @@ func main() {
 		fmt.Println("SecretKEY and encrypt SecretKEY cann't use as the same time ,please check `costool -h`")
 		os.Exit(0)
 	}
+	if SecretIDS != "" && SecretKEYS == "" || SSecretIDS != "" && SSecretKEYS == "" || SecretIDS == "" && SecretKEYS != "" || SSecretIDS == "" && SSecretKEYS != "" {
+		fmt.Printf("cosupload can't use secretid and encrypt secretid as the same time!\ncosupload can't use secretkey and encrypt secretkey as the same time!")
+		os.Exit(0)
+	}
 	if SecretIDS == "" && SecretKEYS == "" && SSecretIDS != "" && SSecretKEYS != "" {
-		SSecretIDS := restore.StringRESTORE(SSecretIDS)
-		SSecretKEYS := restore.StringRESTORE(SSecretKEYS)
+		SecretIDS = template.StringRESTORE(SSecretIDS)
+		SecretKEYS = template.StringRESTORE(SSecretKEYS)
 	}
-
-
-
-
-	if SSecretIDS == "" && SSecretKEYS == "" && SecretIDS != "" && SecretKEYS != "" {
-	// if upload is true
-	if *Upload {
-		//checkout the file exist
-		if _, err := os.Stat(SYSFILEDirS); os.IsNotExist(err) {
-			fmt.Println("the file name and dir in system does not exist")
-			os.Exit(0)
-		}
-		cosupload.COSUpload(BucketURLS, SecretIDS, SecretKEYS, BFILENameS, SYSFILEDirS)
-			os.Exit(0)
-	}
-		// if download is true
-		if *Download {
-			if BFILENameS == "" {
-				fmt.Println("the filename will be download is not find,please check `cosdownload -h`")
-				os.Exit(0)
-			}
-			if *GetList {
-				cosdownload.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
-				fmt.Println("please cat the file name as bucketdirlist.log in this dir")
-				os.Exit(0)
-			}
-		}
-	}else if SecretIDS == "" && SecretKEYS == "" && SSecretIDS != "" && SSecretKEYS != "" {
-		SSecretIDS := restore.StringRESTORE(SSecretIDS)
-		SSecretKEYS := restore.StringRESTORE(SSecretKEYS)
-	// if upload is true
-	if *Upload {		
-		cosupload.COSUpload(BucketURLS, SSecretIDS, SSecretKEYS, BFILENameS, SYSFILEDirS)
-		os.Exit(0)
-	}
-
-	}else{
-
-		fmt.Printf("cosupload can't use secretid and encrypt secretid as the same time!\n cosupload can't use secretkey and encrypt secretkey as the same time!")
-		os.Exit(0)
-
-	}
-
-
 
 	// if upload is true
 	if *Upload {
 		//checkout the file exist
 		if _, err := os.Stat(SYSFILEDirS); os.IsNotExist(err) {
-			fmt.Println("the file name and dir in system does not exist")
+			fmt.Println("the file name and dir in system is not exist")
 			os.Exit(0)
 		}
-		if SSecretIDS == "" && SSecretKEYS == "" && SecretIDS != "" && SecretKEYS != "" {
-			cosupload.COSUpload(BucketURLS, SecretIDS, SecretKEYS, BFILENameS, SYSFILEDirS)
-			os.Exit(0)
-		} else if SecretIDS == "" && SecretKEYS == "" && SSecretIDS != "" && SSecretKEYS != "" {
-			SSecretIDS := restore.StringRESTORE(SSecretIDS)
-			SSecretKEYS := restore.StringRESTORE(SSecretKEYS)
-			cosupload.COSUpload(BucketURLS, SSecretIDS, SSecretKEYS, BFILENameS, SYSFILEDirS)
-			os.Exit(0)
-		} else {
-			fmt.Println("cosupload can't use secretid and encrypt secretid as the same time!")
-			fmt.Println("cosupload can't use secretkey and encrypt secretkey as the same time!")
-			os.Exit(0)
-		}
-
+		operation.COSUpload(BucketURLS, SecretIDS, SecretKEYS, BFILENameS, SYSFILEDirS)
+		os.Exit(0)
 	}
 
 	// if download is true
 	if *Download {
-		if SSecretIDS == "" && SSecretKEYS == "" && SecretIDS != "" && SecretKEYS != "" {
-			if *GetList {
-				cosdownload.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
-				fmt.Println("please cat the file name as bucketdirlist.log in this dir")
-				os.Exit(0)
-			}
-			if BFILENameS == "" {
-				fmt.Println("the filename will be download is not find,please check `cosdownload -h`")
-				os.Exit(0)
-			}
-			cosdownload.CosDownLoad(BucketURLS, SecretIDS, SecretKEYS, BFILENameS)
-			os.Exit(0)
-		} else if SecretIDS == "" && SecretKEYS == "" && SSecretIDS != "" && SSecretKEYS != "" {
-			SSecretIDS := restore.StringRESTORE(SSecretIDS)
-			SSecretKEYS := restore.StringRESTORE(SSecretKEYS)
-			if *GetList {
-				cosdownload.CosGetList(BucketURLS, SSecretIDS, SSecretKEYS)
-				fmt.Println("please cat the file name as bucketdirlist.log in this dir")
-				os.Exit(0)
-			}
-			if BFILENameS == "" {
-				fmt.Println("the filename will be download is not find,please check `cosdownload -h`")
-				fmt.Println("please cat the file name as bucketdirlist.log in this dir")
-				os.Exit(0)
-			}
-			cosdownload.CosDownLoad(BucketURLS, SSecretIDS, SSecretKEYS, BFILENameS)
-			os.Exit(0)
-		} else {
-			fmt.Println("cosdownload can't use secretid and encrypt secretid as the same time!")
-			fmt.Println("cosdownload can't use secretkey and encrypt secretkey as the same time!")
+		if *GetList {
+			operation.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
+			fmt.Println("please cat the file name as bucketdirlist.log in this dir")
 			os.Exit(0)
 		}
+		if BFILENameS == "" {
+			fmt.Println("the filename will be download is not find,please check `cosdownload -h`")
+			os.Exit(0)
+		}
+		operation.CosDownLoad(BucketURLS, SecretIDS, SecretKEYS, BFILENameS)
+		os.Exit(0)
 	}
 
 	// if delete is true
 	if *Delete {
 		//checkout the file exist
-		if _, err := os.Stat(BFILENameS); os.IsNotExist(err) {
-			fmt.Println("the file name and dir in system does not exist")
+		if operation.COSCheckoutfile(BucketURLS, SecretIDS, SecretKEYS, BFILENameS) == false {
+			fmt.Println(BFILENameS + " can't find on the bucket")
 			os.Exit(0)
 		}
-		if SSecretIDS == "" && SSecretKEYS == "" && SecretIDS != "" && SecretKEYS != "" {
-			cosupload.COSUpload(BucketURLS, SecretIDS, SecretKEYS, BFILENameS, SYSFILEDirS)
-			os.Exit(0)
-		} else if SecretIDS == "" && SecretKEYS == "" && SSecretIDS != "" && SSecretKEYS != "" {
-			SSecretIDS := restore.StringRESTORE(SSecretIDS)
-			SSecretKEYS := restore.StringRESTORE(SSecretKEYS)
-			cosupload.COSUpload(BucketURLS, SSecretIDS, SSecretKEYS, BFILENameS, SYSFILEDirS)
-			os.Exit(0)
+		fmt.Printf("Are you sure you want to delete " + BFILENameS + " ? please input  Y/N:")
+		fmt.Scanln(&pd)
+		if pd == "y" || pd == "Y" {
+			operation.COSDelete(BucketURLS, SecretIDS, SecretKEYS, BFILENameS)
 		} else {
-			fmt.Println("cosupload can't use secretid and encrypt secretid as the same time!")
-			fmt.Println("cosupload can't use secretkey and encrypt secretkey as the same time!")
 			os.Exit(0)
 		}
-
 	}
 
 }
