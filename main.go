@@ -50,6 +50,12 @@ var SSecretKEY *string
 // ENCryptstring use encrypt string
 var ENCryptstring *string
 
+// SRC use the bucket file name as source
+var SRC *string
+
+// DST use the bucket file name as dest
+var DST *string
+
 // BFILEName the file name in bucket
 var BFILEName *string
 
@@ -71,39 +77,10 @@ func init() {
 	SSecretID = flag.String("sds", receive, "encrypt secretid")
 	SSecretKEY = flag.String("sks", receive, "encrypt secretkey")
 	BFILEName = flag.String("bfn", receive, "the file full dir and file name on bucket")
-	SYSFILEDir = flag.String("fdir", receive, "the file name and dir in system")
+	SYSFILEDir = flag.String("fdir", receive, "the file dir and name in system")
 	ENCryptstring = flag.String("enc", receive, "encrypt string")
-
-}
-
-// helpinfo cosupload-v1 helpinfo
-func helpinfo(s, s2, s3, s4, s5, s6 *bool) {
-	// var receive2 = flag.Arg(0)
-	var oper = false
-	if *s3 || *s4 || *s5 || *s6 {
-		oper = true
-	}
-	if *s || *s2 || oper == false {
-		fmt.Println("usage: cosupload -url $BucketURL -sd $SecretID -sk $SecretKEY -fnm $FileNAME -fdir $FileDIR")
-		fmt.Println("       cosupload -url $BucketURL -sds $SecretID -sks $SecretKEY -fnm $FileNAME -fdir $FileDIR")
-		fmt.Printf("%5s  %s\n", "-url ", "bucket_url")
-		fmt.Printf("%5s  %s\n", "-sd  ", "secretid")
-		fmt.Printf("%5s  %s\n", "-sk  ", "secretkey")
-		fmt.Printf("%5s  %s\n", "-sds ", "receive encrypt secretid")
-		fmt.Printf("%5s  %s\n", "-sks ", "receive encrypt secretkey")
-		fmt.Printf("%5s  %s\n", "-bfn ", "the file full dir and file name on bucket")
-		fmt.Printf("%5s  %s\n", "-enc ", "encrypt the string will use as encrypt secretid or secretkey ")
-		fmt.Printf("%5s  %s\n%s\n", "-fdir", "the upload file dir and file name in the system", "eg 1:")
-		fmt.Println("       cosupload -url https://********* -sd ****** -sk ****** -fnm /APP_BACKUP/test/test.tar.gz -fdir /usr/local/test.tar.gz")
-		fmt.Printf("%5s\n", "eg 2:")
-		fmt.Println("       ssecretid=`cosupload -enc secretid`; ssecretkey=`cosupload-v1 -enc secretkey` ")
-		fmt.Println("       cosupload -url https://********* -sds $ssecretid -sks $ssecretkey -fnm /APP_BACKUP/test/test.tar.gz -fdir /usr/local/test.tar.gz")
-		os.Exit(0)
-	}
-	// if receive2 != "" {
-	// 	fmt.Println("parameter error,please check `cosupload-v1 -h`")
-	// 	os.Exit(0)
-	// }
+	SRC = flag.String("src", receive, "the bucket file name as source")
+	DST = flag.String("dst", receive, "the bucket file name as dest")
 }
 
 // CHEckouT *string to string
@@ -123,7 +100,7 @@ func main() {
 	}
 
 	// output the tool of costool help info
-	helpinfo(Helpdoc, Helpdoc2, Upload, Download, Delete, Move)
+	template.HelpInfo(Helpdoc, Helpdoc2, Upload, Download, Delete, Move)
 
 	// receive the strings
 	BucketURLS := CHEckouT(BucketURL)
@@ -133,6 +110,8 @@ func main() {
 	SSecretKEYS := CHEckouT(SSecretKEY)
 	BFILENameS := CHEckouT(BFILEName)
 	SYSFILEDirS := CHEckouT(SYSFILEDir)
+	SRCS := CHEckouT(SRC)
+	DSTS := CHEckouT(DST)
 
 	// checkout the secretid and secretkey exist
 	if SecretIDS == "" && SSecretIDS == "" {
@@ -168,6 +147,7 @@ func main() {
 			os.Exit(0)
 		}
 		operation.COSUpload(BucketURLS, SecretIDS, SecretKEYS, BFILENameS, SYSFILEDirS)
+		operation.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
 		os.Exit(0)
 	}
 
@@ -183,6 +163,7 @@ func main() {
 			os.Exit(0)
 		}
 		operation.CosDownLoad(BucketURLS, SecretIDS, SecretKEYS, BFILENameS)
+		operation.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
 		os.Exit(0)
 	}
 
@@ -197,9 +178,39 @@ func main() {
 		fmt.Scanln(&pd)
 		if pd == "y" || pd == "Y" {
 			operation.COSDelete(BucketURLS, SecretIDS, SecretKEYS, BFILENameS)
+			operation.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
 		} else {
 			os.Exit(0)
 		}
+
+	}
+
+	if *Move {
+		if SRCS == "" || DSTS == "" {
+			fmt.Printf("the source or dest can't be empty")
+			os.Exit(0)
+		}
+		if operation.COSCheckoutfile(BucketURLS, SecretIDS, SecretKEYS, SRCS) == false {
+			fmt.Println(SRCS + " can't find on the bucket")
+			os.Exit(0)
+		}
+		if operation.COSCheckoutfile(BucketURLS, SecretIDS, SecretKEYS, DSTS) {
+			fmt.Println(DSTS + " is exist on the bucket")
+			fmt.Printf("Are you sure you want to cover " + DSTS + " ? please input  Y/N:")
+			fmt.Scanln(&pd)
+			if pd == "y" || pd == "Y" {
+				operation.COSDelete(BucketURLS, SecretIDS, SecretKEYS, DSTS)
+				operation.COSCopy(BucketURLS, SecretIDS, SecretKEYS, SRCS, DSTS)
+				operation.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
+			} else {
+				operation.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
+				os.Exit(0)
+			}
+		} else {
+			operation.COSCopy(BucketURLS, SecretIDS, SecretKEYS, SRCS, DSTS)
+			operation.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
+		}
+
 	}
 
 }
