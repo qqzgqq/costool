@@ -8,79 +8,9 @@ import (
 	"os"
 )
 
-// receive is usege scanln user input info
-var receive string
-
-// Upload if Upload is true then upload to cos
-var Upload *bool
-
-// Download if  Download is true then Download from cos
-var Download *bool
-
-// Delete if  Delete is true then Delete from cos
-var Delete *bool
-
-// Move if Move is true then move to cos dir
-var Move *bool
-
-// GetList get file list from cos bucket
-var GetList *bool
-
-// Helpdoc if input -h or --h  then print helpdoc
-var Helpdoc *bool
-
-// Helpdoc2 if input -help or --help then print helpdoc
-var Helpdoc2 *bool
-
-// BucketURL use receive bucket_url
-var BucketURL *string
-
-// SecretID use receive secretid
-var SecretID *string
-
-// SecretKEY use receive secretkey
-var SecretKEY *string
-
-// SSecretID use encrypt secretid
-var SSecretID *string
-
-// SSecretKEY use encrypt secrekey
-var SSecretKEY *string
-
-// ENCryptstring use encrypt string
-var ENCryptstring *string
-
-// SRC use the bucket file name as source
-var SRC *string
-
-// DST use the bucket file name as dest
-var DST *string
-
-// BFILEName the file name in bucket
-var BFILEName *string
-
-// SYSFILEDir the file name and dir in system
-var SYSFILEDir *string
-
-//init fast start
+//init first start
 func init() {
-	BucketURL = flag.String("url", receive, "bucket_url")
-	Helpdoc = flag.Bool("h", false, "-h for helpdoc")
-	Helpdoc2 = flag.Bool("help", false, "--help for helpdoc")
-	Upload = flag.Bool("upload", false, "upload to cos")
-	Download = flag.Bool("download", false, "download from cos")
-	Delete = flag.Bool("delete", false, "delete from cos")
-	GetList = flag.Bool("glt", false, "get file list from cos bucket")
-	Move = flag.Bool("move", false, "move to cos dir")
-	SecretID = flag.String("sd", receive, "secretid")
-	SecretKEY = flag.String("sk", receive, "secretkey")
-	SSecretID = flag.String("sds", receive, "encrypt secretid")
-	SSecretKEY = flag.String("sks", receive, "encrypt secretkey")
-	BFILEName = flag.String("bfn", receive, "the file full dir and file name on bucket")
-	SYSFILEDir = flag.String("fdir", receive, "the file dir and name in system")
-	ENCryptstring = flag.String("enc", receive, "encrypt string")
-	SRC = flag.String("src", receive, "the bucket file name as source")
-	DST = flag.String("dst", receive, "the bucket file name as dest")
+	template.InitreceiveString()
 }
 
 // CHEckouT *string to string
@@ -93,25 +23,25 @@ func main() {
 	// pd use judge
 	var pd string
 	// use costool -enc strings for encrypt strings
-	ENCryptstringS := CHEckouT(ENCryptstring)
+	ENCryptstringS := CHEckouT(template.ENCryptstring)
 	if ENCryptstringS != "" {
 		fmt.Println("++++++++++++++encrypt string+++++++++:", template.StringUPSET(ENCryptstringS))
 		os.Exit(0)
 	}
 
 	// output the tool of costool help info
-	template.HelpInfo(Helpdoc, Helpdoc2, Upload, Download, Delete, Move)
+	template.HelpInfo(template.Helpdoc, template.Helpdoc2, template.Upload, template.Download, template.Delete, template.Move)
 
 	// receive the strings
-	BucketURLS := CHEckouT(BucketURL)
-	var SecretIDS string = CHEckouT(SecretID)
-	SSecretIDS := CHEckouT(SSecretID)
-	var SecretKEYS string = CHEckouT(SecretKEY)
-	SSecretKEYS := CHEckouT(SSecretKEY)
-	BFILENameS := CHEckouT(BFILEName)
-	SYSFILEDirS := CHEckouT(SYSFILEDir)
-	SRCS := CHEckouT(SRC)
-	DSTS := CHEckouT(DST)
+	BucketURLS := CHEckouT(template.BucketURL)
+	var SecretIDS string = CHEckouT(template.SecretID)
+	SSecretIDS := CHEckouT(template.SSecretID)
+	var SecretKEYS = CHEckouT(template.SecretKEY)
+	SSecretKEYS := CHEckouT(template.SSecretKEY)
+	BFILENameS := CHEckouT(template.BFILEName)
+	SYSFILEDirS := CHEckouT(template.SYSFILEDir)
+	SRCS := CHEckouT(template.SRC)
+	DSTS := CHEckouT(template.DST)
 
 	// checkout the secretid and secretkey exist
 	if SecretIDS == "" && SSecretIDS == "" {
@@ -140,7 +70,7 @@ func main() {
 	}
 
 	// if upload is true
-	if *Upload {
+	if *template.Upload {
 		//checkout the file exist
 		if _, err := os.Stat(SYSFILEDirS); os.IsNotExist(err) {
 			fmt.Println("the file name and dir in system is not exist")
@@ -152,8 +82,8 @@ func main() {
 	}
 
 	// if download is true
-	if *Download {
-		if *GetList {
+	if *template.Download {
+		if *template.GetList {
 			operation.CosGetList(BucketURLS, SecretIDS, SecretKEYS)
 			fmt.Println("please cat the file name as bucketdirlist.log in this dir")
 			os.Exit(0)
@@ -168,7 +98,7 @@ func main() {
 	}
 
 	// if delete is true
-	if *Delete {
+	if *template.Delete {
 		//checkout the file exist
 		if operation.COSCheckoutfile(BucketURLS, SecretIDS, SecretKEYS, BFILENameS) == false {
 			fmt.Println(BFILENameS + " can't find on the bucket")
@@ -185,7 +115,7 @@ func main() {
 
 	}
 
-	if *Move {
+	if *template.Move {
 		if SRCS == "" || DSTS == "" {
 			fmt.Printf("the source or dest can't be empty")
 			os.Exit(0)
