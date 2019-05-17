@@ -63,7 +63,10 @@ func CosDownLoad(btURL, secID, secKEY, fileName string) {
 	num := strings.Count(fileName, "/")
 	arr := strings.Split(fileName, "/")
 	//新增创建下载文件夹
-	num2 := strings.Count(arr[num], ".")
+	var num2 = strings.Count(arr[num], ".")
+	if num2 == 0 {
+		num2 = 1
+	}
 	arr2 := strings.Split(arr[num], ".")
 	_ = os.Mkdir(arr2[num2-1], 777)
 	file, err := os.Create(arr2[num2-1] + "/" + arr[num])
