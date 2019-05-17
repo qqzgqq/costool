@@ -1,6 +1,10 @@
 package template
 
-import "flag"
+import (
+	"flag"
+	"fmt"
+	"os"
+)
 
 // receive is usege scanln user input info
 var receive string
@@ -75,4 +79,46 @@ func InitreceiveString() {
 	ENCryptstring = flag.String("enc", receive, "encrypt string")
 	SRC = flag.String("src", receive, "the bucket file name as source")
 	DST = flag.String("dst", receive, "the bucket file name as dest")
+}
+
+// CHEckouT *string to string
+func CHEckouT(s *string) string {
+	return *s
+}
+
+// ReceiveStringsCheckout use receive the *string to strings and judge
+func ReceiveStringsCheckout(SecretID, SSecretID, SecretKEY, SSecretKEY *string) (string, string) {
+	// receive the *strings to strings
+
+	SecretIDS := CHEckouT(SecretID)
+	SSecretIDS := CHEckouT(SSecretID)
+	SecretKEYS := CHEckouT(SecretKEY)
+	SSecretKEYS := CHEckouT(SSecretKEY)
+
+	// checkout the secretid and secretkey exist
+	if SecretIDS == "" && SSecretIDS == "" {
+		fmt.Println("SecretID is not find,please check `costool -h`")
+		os.Exit(0)
+	}
+	if SecretKEYS == "" && SSecretKEYS == "" {
+		fmt.Println("SecretKEY is not find,please check `costool -h`")
+		os.Exit(0)
+	}
+	if SecretIDS != "" && SSecretIDS != "" {
+		fmt.Println("SecretID and encrypt SecretID cann't use as the same time ,please check `costool -h`")
+		os.Exit(0)
+	}
+	if SecretKEYS != "" && SSecretKEYS != "" {
+		fmt.Println("SecretKEY and encrypt SecretKEY cann't use as the same time ,please check `costool -h`")
+		os.Exit(0)
+	}
+	if SecretIDS != "" && SecretKEYS == "" || SSecretIDS != "" && SSecretKEYS == "" || SecretIDS == "" && SecretKEYS != "" || SSecretIDS == "" && SSecretKEYS != "" {
+		fmt.Printf("cosupload can't use secretid and encrypt secretid as the same time!\ncosupload can't use secretkey and encrypt secretkey as the same time!")
+		os.Exit(0)
+	}
+	if SecretIDS == "" && SecretKEYS == "" && SSecretIDS != "" && SSecretKEYS != "" {
+		SecretIDS = StringRESTORE(SSecretIDS)
+		SecretKEYS = StringRESTORE(SSecretKEYS)
+	}
+	return SecretIDS, SecretKEYS
 }
