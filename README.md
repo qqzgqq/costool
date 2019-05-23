@@ -1,4 +1,5 @@
 <pre>
+# costool -h
 usage: costool [OPERATION] -url $BucketURL -sd $SecretID -sk $SecretKEY [PARAMETER]
        costool [OPERATION] -url $BucketURL -sds $SSecretID -sks $SSecretKEY [PARAMETER]
 
